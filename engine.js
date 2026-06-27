@@ -7,10 +7,12 @@
 let _startQuiz = function () {};
 let _answerFn  = function () {};
 let _answering = false;   // 連打防止
+let _quizReady = false;   // quiz.py の登録が完了したか
 
 function registerQuiz(startFn, answerFn) {
   _startQuiz = startFn;
   _answerFn  = answerFn;
+  _quizReady = true;
 }
 
 // ===== 質問を表示する（quiz.py から呼ばれる） =====
@@ -74,25 +76,35 @@ document.getElementById('btn-apply').addEventListener('click', function () {
   const code = document.getElementById('code-text').value;
   document.getElementById('apply-msg').textContent = '反映中…';
   document.getElementById('result-area').innerHTML = '';
+  applyCodeWithRetry(code, 0);
+});
 
+function applyCodeWithRetry(code, tryCount) {
   if (window.runQuizCode) {
     window.runQuizCode(code);
     document.getElementById('apply-msg').textContent = '✓ 反映しました';
-  } else {
-    document.getElementById('apply-msg').textContent =
-      'Python がまだ準備中です。少し待って再度押してください。';
+
+    // ゲームの状態を最初からにする（新しいコードで再スタート）
+    document.getElementById('question-text').textContent = '「▶ スタート」を押してね';
+    document.getElementById('question-count').textContent = '';
+    document.getElementById('log-list').innerHTML = '';
+    document.getElementById('phase-label').textContent = 'STEP: 誕生月をさがそう';
+    document.getElementById('btn-yes').disabled = true;
+    document.getElementById('btn-no').disabled  = true;
+    _answering = false;
     return;
   }
 
-  // ゲームの状態を最初からにする（新しいコードで再スタート）
-  document.getElementById('question-text').textContent = '「▶ スタート」を押してね';
-  document.getElementById('question-count').textContent = '';
-  document.getElementById('log-list').innerHTML = '';
-  document.getElementById('phase-label').textContent = 'STEP: 誕生月をさがそう';
-  document.getElementById('btn-yes').disabled = true;
-  document.getElementById('btn-no').disabled  = true;
-  _answering = false;
-});
+  // Python（Brython）の起動がまだ終わっていない場合は、少し待って自動で再試行する
+  if (tryCount < 25) {
+    document.getElementById('apply-msg').textContent =
+      'Python を読み込み中です…（' + (tryCount + 1) + '）';
+    setTimeout(function () { applyCodeWithRetry(code, tryCount + 1); }, 300);
+  } else {
+    document.getElementById('apply-msg').textContent =
+      'Python の読み込みに時間がかかっています。ページを再読み込みしてから、もう一度お試しください。';
+  }
+}
 
 // ===== ボタン：元のコードに戻す =====
 document.getElementById('btn-code-reset').addEventListener('click', function () {
@@ -123,6 +135,11 @@ document.getElementById('btn-no').addEventListener('click', function () {
 
 // ===== ボタン：スタート / リセット =====
 document.getElementById('btn-quiz-start').addEventListener('click', function () {
+  if (!_quizReady) {
+    document.getElementById('question-text').textContent =
+      'Python を読み込み中です。少し待ってからもう一度押してください。';
+    return;
+  }
   document.getElementById('result-area').innerHTML = '';
   document.getElementById('log-list').innerHTML = '';
   document.getElementById('phase-label').textContent = 'STEP: 誕生月をさがそう';

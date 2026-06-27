@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <title>誕生日当てゲーム（二分探索）</title>
   <!-- Brython：ブラウザ上で Python を動かすライブラリ（同梱・オフライン対応） -->
-  <script src="lib/brython.min.js"></script>
-  <script src="lib/brython_stdlib.js"></script>
+  <script src="brython-lib/brython.min.js"></script>
+  <script src="brython-lib/brython_stdlib.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
-<body onload="brython()">
+<body>
 
   <div id="wrap">
 
@@ -85,6 +85,34 @@ window.runQuizCode = run_quiz_code
 
 # 起動時に一度自動実行
 run_quiz_code(window.QUIZ_CODE)
+  </script>
+
+  <!-- ===== Brython 起動スクリプト（触らない部分） =====
+       brython.min.js / brython_stdlib.js の読み込みが遅れる環境
+       （回線が遅い・キャッシュがない等）でも確実に起動するよう、
+       少し待ってから brython() を呼び、見つからない場合は
+       数回リトライします。 -->
+  <script>
+    (function () {
+      var tries = 0;
+      function tryStartBrython() {
+        tries++;
+        if (typeof window.brython === 'function') {
+          window.brython({debug: 0});
+        } else if (tries < 50) {
+          // brython.min.js の読み込みがまだ終わっていない → 200ms後に再試行
+          setTimeout(tryStartBrython, 200);
+        } else {
+          document.getElementById('apply-msg').textContent =
+            'Python の読み込みに失敗しました。ページを再読み込みしてください。';
+        }
+      }
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        tryStartBrython();
+      } else {
+        document.addEventListener('DOMContentLoaded', tryStartBrython);
+      }
+    })();
   </script>
 
 </body>
