@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>誕生日当てゲーム（二分探索）</title>
+  <!-- Brython：ブラウザ上で Python を動かすライブラリ（同梱・オフライン対応） -->
+  <script src="lib/brython.min.js"></script>
+  <script src="lib/brython_stdlib.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body onload="brython()">
+
+  <div id="wrap">
+
+    <!-- ===== 左：Pythonコード（編集できます） ===== -->
+    <div id="code-panel">
+      <div id="code-header">📝 quiz.py（このプログラムが質問を作っています）</div>
+      <textarea id="code-text" spellcheck="false"></textarea>
+      <div id="code-footer">
+        <button id="btn-apply">▶ このコードを反映する</button>
+        <button id="btn-code-reset">↺ 元のコードに戻す</button>
+        <span id="apply-msg"></span>
+      </div>
+      <div id="bug-hint">
+        🐛 1ヶ所だけ、まちがいがあります。<br>
+        <code>narrow_range</code> 関数の中の <code>low = mid</code> を見つけて、
+        正しく直してから「▶ このコードを反映する」を押してみましょう！
+      </div>
+    </div>
+
+    <!-- ===== 右：クイズ画面 ===== -->
+    <div id="quiz-panel">
+      <h1 id="title">🎂 誕生日当てゲーム</h1>
+      <p id="subtitle">二分探索（にぶんたんさく）で、先輩の誕生日を当てよう！</p>
+
+      <div id="card">
+        <div id="phase-label">STEP: 誕生月をさがそう</div>
+        <div id="question-count"></div>
+        <div id="question-text">「▶ スタート」を押してね</div>
+
+        <div id="answer-buttons">
+          <button id="btn-yes">✅ はい（Yes）</button>
+          <button id="btn-no">❌ いいえ（No）</button>
+        </div>
+
+        <div id="result-area"></div>
+      </div>
+
+      <div id="control-row">
+        <button id="btn-quiz-start">▶ スタート</button>
+        <button id="btn-quiz-reset">↺ さいしょから</button>
+      </div>
+
+      <div id="log-area">
+        <div id="log-title">質問の記録</div>
+        <div id="log-list"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- engine.js（触らない部分） -->
+  <script src="engine.js"></script>
+
+  <!-- ===== Python ローダー（触らない部分） ===== -->
+  <script type="text/python" id="loader">
+from browser import document, window
+import traceback
+
+# エディタに quiz.py の中身を表示する（編集できる状態にする）
+document['code-text'].value = window.QUIZ_CODE
+
+def run_quiz_code(code):
+    namespace = {}
+    try:
+        exec(code, namespace)
+    except Exception:
+        document['result-area'].html = (
+            '<div class="error-box">' +
+            traceback.format_exc().replace('\n', '<br>') +
+            '</div>'
+        )
+
+window.runQuizCode = run_quiz_code
+
+# 起動時に一度自動実行
+run_quiz_code(window.QUIZ_CODE)
+  </script>
+
+</body>
+</html>
